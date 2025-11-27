@@ -1,0 +1,8 @@
+com\retargetiq\rloffer\RlOfferServiceApplication.class
+com\retargetiq\rloffer\model\CandidateItem.class
+com\retargetiq\rloffer\model\OfferRequest.class
+com\retargetiq\rloffer\model\UserFeatures.class
+com\retargetiq\rloffer\service\OfferService.class
+com\retargetiq\rloffer\model\OfferResponse.class
+com\retargetiq\rloffer\service\BanditEngine.class
+com\retargetiq\rloffer\controller\OfferController.class

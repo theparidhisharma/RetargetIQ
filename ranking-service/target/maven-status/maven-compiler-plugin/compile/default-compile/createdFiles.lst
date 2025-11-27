@@ -1,0 +1,6 @@
+com\retargetiq\ranking\service\RankingService.class
+com\retargetiq\ranking\model\RankResponse.class
+com\retargetiq\ranking\controller\RankingController.class
+com\retargetiq\ranking\model\RankedItem.class
+com\retargetiq\ranking\model\RankRequest.class
+com\retargetiq\ranking\service\RankingServiceApplication.class

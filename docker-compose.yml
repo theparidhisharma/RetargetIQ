@@ -1,12 +1,11 @@
 version: "3.9"
 
 services:
-  # -----------------------------------------------------------
-  # INFRASTRUCTURE LAYER
-  # -----------------------------------------------------------
+  # -------------------------------------------------------
+  # CORE INFRASTRUCTURE
+  # -------------------------------------------------------
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
-    container_name: zookeeper
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
     ports:
@@ -14,7 +13,6 @@ services:
 
   kafka:
     image: confluentinc/cp-kafka:7.5.0
-    container_name: kafka
     depends_on:
       - zookeeper
     ports:
@@ -23,19 +21,12 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_HOST://0.0.0.0:29092
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
 
-  redis:
-    image: redis:7-alpine
-    container_name: redis
-    ports:
-      - "6379:6379"
-
   postgres:
-    image: postgres:15-alpine
-    container_name: postgres
+    image: postgres:15
     environment:
       POSTGRES_USER: retarget
       POSTGRES_PASSWORD: retarget
@@ -45,134 +36,117 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
 
-  minio:
-    image: minio/minio
-    container_name: minio
-    command: server /data --console-address ":9001"
-    environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
+  redis:
+    image: redis:7
     ports:
-      - "9000:9000"
-      - "9001:9001"
-    volumes:
-      - miniodata:/data
+      - "6379:6379"
 
-  # -----------------------------------------------------------
-  # EXISTING SERVICES
-  # -----------------------------------------------------------
+  # -------------------------------------------------------
+  # EXISTING SERVICES (Your Repo)
+  # -------------------------------------------------------
   user-activity-service:
     build: ./user-activity-service
-    container_name: user-activity-service
-    environment:
-      KAFKA_BOOTSTRAP: kafka:9092
     depends_on:
       - kafka
     ports:
       - "8081:8081"
+    environment:
+      KAFKA_BOOTSTRAP: kafka:9092
 
   order-service:
     build: ./order-service
-    container_name: order-service
-    environment:
-      KAFKA_BOOTSTRAP: kafka:9092
     depends_on:
       - kafka
     ports:
       - "8082:8082"
+    environment:
+      KAFKA_BOOTSTRAP: kafka:9092
 
   event-processor-service:
     build: ./event-processor-service
-    container_name: event-processor-service
-    environment:
-      KAFKA_BOOTSTRAP: kafka:9092
     depends_on:
       - kafka
     ports:
       - "8083:8083"
+    environment:
+      KAFKA_BOOTSTRAP: kafka:9092
 
   analytics-service:
     build: ./analytics-service
-    container_name: analytics-service
-    environment:
-      KAFKA_BOOTSTRAP: kafka:9092
-      POSTGRES_URL: jdbc:postgresql://postgres:5432/retargetdb
     depends_on:
       - kafka
       - postgres
     ports:
       - "8084:8084"
-
-  # -----------------------------------------------------------
-  # NEW AI-POWERED SERVICES
-  # -----------------------------------------------------------
-
-  feature-store-service:
-    build: ./feature-store-service
-    container_name: feature-store-service
     environment:
       KAFKA_BOOTSTRAP: kafka:9092
-      REDIS_HOST: redis
       POSTGRES_URL: jdbc:postgresql://postgres:5432/retargetdb
+      POSTGRES_USER: retarget
+      POSTGRES_PASSWORD: retarget
+
+  # -------------------------------------------------------
+  # NEW AI / GOOGLE-LEVEL SERVICES
+  # -------------------------------------------------------
+  feature-store-service:
+    build: ./feature-store-service
     depends_on:
       - kafka
-      - redis
       - postgres
+      - redis
     ports:
       - "8085:8085"
+    environment:
+      KAFKA_BOOTSTRAP: kafka:9092
+      POSTGRES_URL: jdbc:postgresql://postgres:5432/retargetdb
+      POSTGRES_USER: retarget
+      POSTGRES_PASSWORD: retarget
+      REDIS_HOST: redis
 
   retrieval-service:
     build: ./retrieval-service
-    container_name: retrieval-service
-    environment:
-      FEATURE_STORE_URL: http://feature-store-service:8085
-      MINIO_ENDPOINT: http://minio:9000
     depends_on:
       - feature-store-service
-      - minio
     ports:
       - "8086:8086"
+    environment:
+      FEATURE_STORE_URL: http://feature-store-service:8085
 
   ranking-service:
     build: ./ranking-service
-    container_name: ranking-service
-    environment:
-      RETRIEVAL_URL: http://retrieval-service:8086
-      FEATURE_STORE_URL: http://feature-store-service:8085
     depends_on:
       - retrieval-service
       - feature-store-service
     ports:
       - "8087:8087"
+    environment:
+      RETRIEVAL_URL: http://retrieval-service:8086
+      FEATURE_STORE_URL: http://feature-store-service:8085
 
   rl-offer-service:
     build: ./rl-offer-service
-    container_name: rl-offer-service
-    environment:
-      FEATURE_STORE_URL: http://feature-store-service:8085
-      KAFKA_BOOTSTRAP: kafka:9092
     depends_on:
-      - kafka
+      - ranking-service
       - feature-store-service
     ports:
       - "8088:8088"
+    environment:
+      RANKING_URL: http://ranking-service:8087
+      FEATURE_STORE_URL: http://feature-store-service:8085
 
   recommend-api-service:
     build: ./recommend-api-service
-    container_name: recommend-api-service
-    environment:
-      FEATURE_STORE_URL: http://feature-store-service:8085
-      RETRIEVAL_URL: http://retrieval-service:8086
-      RANKING_URL: http://ranking-service:8087
-      OFFER_URL: http://rl-offer-service:8088
     depends_on:
       - retrieval-service
       - ranking-service
       - rl-offer-service
       - feature-store-service
     ports:
-      - "8080:8080"
+      - "8089:8089"
+    environment:
+      RETRIEVAL_URL: http://retrieval-service:8086
+      RANKING_URL: http://ranking-service:8087
+      RL_URL: http://rl-offer-service:8088
+      FEATURE_STORE_URL: http://feature-store-service:8085
 
 volumes:
   pgdata:
-  miniodata:

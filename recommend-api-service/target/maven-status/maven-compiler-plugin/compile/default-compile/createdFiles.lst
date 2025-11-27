@@ -1,0 +1,7 @@
+com\retargetiq\recommend\model\CandidateItem.class
+com\retargetiq\recommend\model\RecommendationResponse.class
+com\retargetiq\recommend\RecommendApiServiceApplication.class
+com\retargetiq\recommend\service\RecommendService.class
+com\retargetiq\recommend\controller\RecommendController.class
+com\retargetiq\recommend\model\RankedItem.class
+com\retargetiq\recommend\model\UserFeatures.class

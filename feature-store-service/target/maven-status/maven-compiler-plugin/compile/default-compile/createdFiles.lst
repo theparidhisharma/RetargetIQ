@@ -1,0 +1,5 @@
+com\retargetiq\featurestore\repo\UserFeatureRepository.class
+main\java\com\retargetiq\featurestore\controller\FeatureController.class
+com\retargetiq\featurestore\kafka\EventConsumer.class
+main\java\com\retargetiq\featurestore\FeatureStoreApplication.class
+com\retargetiq\featurestore\model\UserFeature.class
