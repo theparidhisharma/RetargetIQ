@@ -1,7 +1,7 @@
-/Users/paridhisharma/Desktop/kafka-retargeting-project/analytics-service/src/main/java/com/example/analytics/model/AnalyticsEvent.java
-/Users/paridhisharma/Desktop/kafka-retargeting-project/analytics-service/src/main/java/com/example/analytics/AnalyticsService.java
-/Users/paridhisharma/Desktop/kafka-retargeting-project/analytics-service/src/main/java/com/example/analytics/KafkaConsumer.java
-/Users/paridhisharma/Desktop/kafka-retargeting-project/analytics-service/src/main/java/com/example/analytics/UserActivity.java
-/Users/paridhisharma/Desktop/kafka-retargeting-project/analytics-service/src/main/java/com/example/analytics/AnalyticsController.java
-/Users/paridhisharma/Desktop/kafka-retargeting-project/analytics-service/src/main/java/com/example/analytics/repository/AnalyticsRepository.java
-/Users/paridhisharma/Desktop/kafka-retargeting-project/analytics-service/src/main/java/com/example/analytics/AnalyticsServiceApplication.java
+C:\Projects\RetargetIQ\analytics-service\src\main\java\com\retargetiq\analytics\KafkaConsumer.java
+C:\Projects\RetargetIQ\analytics-service\src\main\java\com\retargetiq\analytics\AnalyticsServiceApplication.java
+C:\Projects\RetargetIQ\analytics-service\src\main\java\com\retargetiq\analytics\AnalyticsController.java
+C:\Projects\RetargetIQ\analytics-service\src\main\java\com\retargetiq\analytics\model\AnalyticsEvent.java
+C:\Projects\RetargetIQ\analytics-service\src\main\java\com\retargetiq\analytics\UserActivity.java
+C:\Projects\RetargetIQ\analytics-service\src\main\java\com\retargetiq\analytics\AnalyticsService.java
+C:\Projects\RetargetIQ\analytics-service\src\main\java\com\retargetiq\analytics\repository\AnalyticsRepository.java

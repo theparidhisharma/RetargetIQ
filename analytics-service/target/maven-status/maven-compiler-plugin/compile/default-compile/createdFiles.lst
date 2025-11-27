@@ -1,7 +1,1 @@
-com/example/analytics/AnalyticsServiceApplication.class
-com/example/analytics/AnalyticsService.class
-com/example/analytics/repository/AnalyticsRepository.class
-com/example/analytics/AnalyticsController.class
-com/example/analytics/model/AnalyticsEvent.class
-com/example/analytics/KafkaConsumer.class
-com/example/analytics/UserActivity.class
+com\example\analytics\AnalyticsServiceApplication.class
