@@ -1,3 +1,4 @@
-/Users/paridhisharma/Desktop/kafka-retargeting-project/event-processor-service/src/main/java/com/example/eventprocessor/KafkaConsumerConfig.java
-/Users/paridhisharma/Desktop/kafka-retargeting-project/event-processor-service/src/main/java/com/example/eventprocessor/Main.java
-/Users/paridhisharma/Desktop/kafka-retargeting-project/event-processor-service/src/main/java/com/example/eventprocessor/KafkaConsumerService.java
+C:\Projects\RetargetIQ\event-processor-service\src\main\java\com\retargetiq\orderservice\eventprocessor\KafkaConsumerConfig.java
+C:\Projects\RetargetIQ\event-processor-service\src\main\java\com\retargetiq\orderservice\eventprocessor\KafkaConsumerService.java
+C:\Projects\RetargetIQ\event-processor-service\src\main\java\com\retargetiq\orderservice\eventprocessor\ServiceHealthIndicator.java
+C:\Projects\RetargetIQ\event-processor-service\src\main\java\com\retargetiq\orderservice\Main.java

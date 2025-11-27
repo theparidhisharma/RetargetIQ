@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   # -------------------------------------------------------
   # CORE INFRASTRUCTURE
@@ -51,7 +49,8 @@ services:
     ports:
       - "8081:8081"
     environment:
-      KAFKA_BOOTSTRAP: kafka:9092
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
 
   order-service:
     build: ./order-service
@@ -60,7 +59,8 @@ services:
     ports:
       - "8082:8082"
     environment:
-      KAFKA_BOOTSTRAP: kafka:9092
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
 
   event-processor-service:
     build: ./event-processor-service
@@ -69,7 +69,8 @@ services:
     ports:
       - "8083:8083"
     environment:
-      KAFKA_BOOTSTRAP: kafka:9092
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
 
   analytics-service:
     build: ./analytics-service
@@ -79,10 +80,11 @@ services:
     ports:
       - "8084:8084"
     environment:
-      KAFKA_BOOTSTRAP: kafka:9092
-      POSTGRES_URL: jdbc:postgresql://postgres:5432/retargetdb
-      POSTGRES_USER: retarget
-      POSTGRES_PASSWORD: retarget
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/retargetdb
+      SPRING_DATASOURCE_USERNAME: retarget
+      SPRING_DATASOURCE_PASSWORD: retarget
 
   # -------------------------------------------------------
   # NEW AI / GOOGLE-LEVEL SERVICES
@@ -96,11 +98,12 @@ services:
     ports:
       - "8085:8085"
     environment:
-      KAFKA_BOOTSTRAP: kafka:9092
-      POSTGRES_URL: jdbc:postgresql://postgres:5432/retargetdb
-      POSTGRES_USER: retarget
-      POSTGRES_PASSWORD: retarget
-      REDIS_HOST: redis
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/retargetdb
+      SPRING_DATASOURCE_USERNAME: retarget
+      SPRING_DATASOURCE_PASSWORD: retarget
+      SPRING_REDIS_HOST: redis
 
   retrieval-service:
     build: ./retrieval-service
@@ -145,8 +148,19 @@ services:
     environment:
       RETRIEVAL_URL: http://retrieval-service:8086
       RANKING_URL: http://ranking-service:8087
-      RL_URL: http://rl-offer-service:8088
+      RL_OFFER_URL: http://rl-offer-service:8088
       FEATURE_STORE_URL: http://feature-store-service:8085
+
+  frontend-ui:
+    build:
+      context: ./frontend-ui
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    depends_on:
+      - recommend-api-service
+    environment:
+      REACT_APP_API_URL: http://localhost:8089
 
 volumes:
   pgdata:

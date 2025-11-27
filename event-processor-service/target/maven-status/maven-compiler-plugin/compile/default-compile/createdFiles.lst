@@ -1,0 +1,4 @@
+com\example\orderservice\eventprocessor\Main.class
+com\example\orderservice\eventprocessor\KafkaConsumerService.class
+com\retargetiq\orderservice\eventprocessor\KafkaConsumerConfig.class
+com\retargetiq\orderservice\eventprocessor\ServiceHealthIndicator.class
