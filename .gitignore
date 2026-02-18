@@ -71,3 +71,16 @@ build/
 *.swo
 *.tmp
 *.bak
+
+
+# Maven
+target/
+*.class
+
+# IntelliJ / IDE
+.idea/
+*.iml
+
+# Logs
+*.log
+
