@@ -1,4 +1,4 @@
-package com.example.analytics;
+package com.retargetiq.analytics;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
