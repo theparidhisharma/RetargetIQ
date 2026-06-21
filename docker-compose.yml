@@ -40,7 +40,7 @@ services:
       - "6379:6379"
 
   # -------------------------------------------------------
-  # EXISTING SERVICES (Your Repo)
+  # MICROSERVICES
   # -------------------------------------------------------
   user-activity-service:
     build: ./user-activity-service
@@ -49,7 +49,6 @@ services:
     ports:
       - "8081:8081"
     environment:
-      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
 
   order-service:
@@ -59,7 +58,6 @@ services:
     ports:
       - "8082:8082"
     environment:
-      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
 
   event-processor-service:
@@ -69,7 +67,6 @@ services:
     ports:
       - "8083:8083"
     environment:
-      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
 
   analytics-service:
@@ -80,15 +77,11 @@ services:
     ports:
       - "8084:8084"
     environment:
-      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/retargetdb
       SPRING_DATASOURCE_USERNAME: retarget
       SPRING_DATASOURCE_PASSWORD: retarget
 
-  # -------------------------------------------------------
-  # NEW AI / GOOGLE-LEVEL SERVICES
-  # -------------------------------------------------------
   feature-store-service:
     build: ./feature-store-service
     depends_on:
@@ -97,13 +90,6 @@ services:
       - redis
     ports:
       - "8085:8085"
-    environment:
-      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/retargetdb
-      SPRING_DATASOURCE_USERNAME: retarget
-      SPRING_DATASOURCE_PASSWORD: retarget
-      SPRING_REDIS_HOST: redis
 
   retrieval-service:
     build: ./retrieval-service
@@ -111,8 +97,6 @@ services:
       - feature-store-service
     ports:
       - "8086:8086"
-    environment:
-      FEATURE_STORE_URL: http://feature-store-service:8085
 
   ranking-service:
     build: ./ranking-service
@@ -121,9 +105,6 @@ services:
       - feature-store-service
     ports:
       - "8087:8087"
-    environment:
-      RETRIEVAL_URL: http://retrieval-service:8086
-      FEATURE_STORE_URL: http://feature-store-service:8085
 
   rl-offer-service:
     build: ./rl-offer-service
@@ -132,9 +113,6 @@ services:
       - feature-store-service
     ports:
       - "8088:8088"
-    environment:
-      RANKING_URL: http://ranking-service:8087
-      FEATURE_STORE_URL: http://feature-store-service:8085
 
   recommend-api-service:
     build: ./recommend-api-service
@@ -145,22 +123,37 @@ services:
       - feature-store-service
     ports:
       - "8089:8089"
-    environment:
-      RETRIEVAL_URL: http://retrieval-service:8086
-      RANKING_URL: http://ranking-service:8087
-      RL_OFFER_URL: http://rl-offer-service:8088
-      FEATURE_STORE_URL: http://feature-store-service:8085
 
   frontend-ui:
-    build:
-      context: ./frontend-ui
-      dockerfile: Dockerfile
+    build: ./frontend-ui
     ports:
       - "3000:3000"
     depends_on:
       - recommend-api-service
-    environment:
-      REACT_APP_API_URL: http://localhost:8089
+
+  # -------------------------------------------------------
+  # MONITORING STACK
+  # -------------------------------------------------------
+  prometheus:
+    image: prom/prometheus
+    container_name: retargetiq-prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    ports:
+      - "9090:9090"
+    depends_on:
+      - analytics-service
+      - event-processor-service
+
+  grafana:
+    image: grafana/grafana
+    container_name: retargetiq-grafana
+    ports:
+      - "3001:3000"
+    depends_on:
+      - prometheus
 
 volumes:
   pgdata:

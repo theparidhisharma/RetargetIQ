@@ -1,8 +1,0 @@
-server:
-  port: 3006
-
-retrieval-service:
-  url: http://retrieval-service:3005
-
-feature-store-service:
-  url: http://feature-store-service:3004

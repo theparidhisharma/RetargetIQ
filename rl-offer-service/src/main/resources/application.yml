@@ -1,6 +1,0 @@
-server:
-  port: 3007
-
-spring:
-  application:
-    name: rl-offer-service

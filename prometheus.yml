@@ -1,0 +1,15 @@
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  - job_name: analytics-service
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets:
+          - analytics-service:8084
+
+  - job_name: event-processor-service
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets:
+          - event-processor-service:8083
