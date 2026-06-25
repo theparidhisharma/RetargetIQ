@@ -1,3 +1,4 @@
+
 package com.retargetiq.featurestore.model;
 
 import jakarta.persistence.*;

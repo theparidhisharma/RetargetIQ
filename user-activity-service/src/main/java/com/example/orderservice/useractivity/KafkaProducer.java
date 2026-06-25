@@ -24,7 +24,7 @@ public class KafkaProducer {
         try {
             Map<String, String> payload = new HashMap<>();
             payload.put("userId", userId);
-            payload.put("action", action);
+            payload.put("eventType", action);
             String json = objectMapper.writeValueAsString(payload);
             kafkaTemplate.send("user-activity", json);
         } catch (Exception e) {

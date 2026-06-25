@@ -1,55 +1,102 @@
 package com.retargetiq.analytics;
 
 import com.retargetiq.analytics.model.AnalyticsEvent;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.format.annotation.DateTimeFormat;
+import com.retargetiq.analytics.metrics.MetricsService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/analytics")
 public class AnalyticsController {
-    
-    @Autowired
-    private AnalyticsService analyticsService;
-    
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<List<AnalyticsEvent>> getUserEvents(@PathVariable String userId) {
-        List<AnalyticsEvent> events = analyticsService.getUserEvents(userId);
-        return ResponseEntity.ok(events);
+
+    private final AnalyticsService analyticsService;
+    private final MetricsService metricsService;
+
+    public AnalyticsController(
+            AnalyticsService analyticsService,
+            MetricsService metricsService) {
+
+        this.analyticsService = analyticsService;
+        this.metricsService = metricsService;
     }
-    
-    @GetMapping("/campaign/{campaignId}")
-    public ResponseEntity<Map<String, Object>> getCampaignAnalytics(
-            @PathVariable String campaignId,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end) {
-        
-        Map<String, Object> analytics = analyticsService.getCampaignAnalytics(campaignId, start, end);
-        return ResponseEntity.ok(analytics);
-    }
-    
-    @GetMapping("/summary")
-    public ResponseEntity<Map<String, Long>> getEventSummary(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end) {
-        
-        Map<String, Long> summary = analyticsService.getEventSummary(start, end);
-        return ResponseEntity.ok(summary);
-    }
-    
+
+    /**
+     * Save an event directly (useful for testing)
+     */
     @PostMapping("/event")
-    public ResponseEntity<AnalyticsEvent> trackEvent(@RequestBody UserActivity userActivity) {
-        AnalyticsEvent event = analyticsService.processUserActivity(userActivity);
+    public ResponseEntity<AnalyticsEvent> trackEvent(
+            @RequestBody UserActivity activity) {
+
+        AnalyticsEvent event =
+                analyticsService.processUserActivity(activity);
+
         return ResponseEntity.ok(event);
     }
-    
-    @GetMapping("/health")
-    public ResponseEntity<String> health() {
-        return ResponseEntity.ok("Analytics Service is healthy");
+
+    /**
+     * All events for one user
+     */
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<AnalyticsEvent>> getUserEvents(
+            @PathVariable String userId) {
+
+        return ResponseEntity.ok(
+                analyticsService.getUserEvents(userId)
+        );
     }
+
+    /**
+     * Campaign events
+     */
+    @GetMapping("/campaign/{campaignId}")
+    public ResponseEntity<List<AnalyticsEvent>> getCampaignEvents(
+            @PathVariable String campaignId) {
+
+        return ResponseEntity.ok(
+                analyticsService.getCampaignEvents(campaignId)
+        );
+    }
+
+    /**
+     * Dashboard summary
+     */
+    @GetMapping("/summary")
+    public ResponseEntity<Map<String,Object>> summary(){
+
+        Map<String,Object> response = new HashMap<>();
+
+        response.put("views",
+                metricsService.getViews());
+
+        response.put("clicks",
+                metricsService.getClicks());
+
+        response.put("purchases",
+                metricsService.getPurchases());
+
+        response.put("addToCart",
+                metricsService.getAddToCart());
+
+        response.put("conversionRate",
+                metricsService.getConversionRate());
+
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Health endpoint
+     */
+    @GetMapping("/health")
+    public ResponseEntity<String> health(){
+
+        return ResponseEntity.ok(
+                "Analytics Service Running"
+        );
+
+    }
+
 }

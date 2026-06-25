@@ -24,6 +24,6 @@ WORKDIR /app
 # Note: Ensure the target jar name matches what your pom.xml generates
 COPY --from=builder /app/target/order-service-1.0-SNAPSHOT.jar app.jar
 
-EXPOSE 8083
+EXPOSE 8081
 
 CMD ["java", "-jar", "app.jar"]

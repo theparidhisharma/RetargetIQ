@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   # -------------------------------------------------------
   # CORE INFRASTRUCTURE
@@ -44,78 +46,115 @@ services:
   # -------------------------------------------------------
   user-activity-service:
     build: ./user-activity-service
+    container_name: retargetiq-user-activity-service-1
     depends_on:
       - kafka
     ports:
-      - "8081:8081"
+      - "8080:8080"  # ← FIXED: Actually runs on 8080
     environment:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SERVER_PORT: 8080
 
   order-service:
     build: ./order-service
+    container_name: retargetiq-order-service-1
     depends_on:
       - kafka
     ports:
-      - "8082:8082"
+      - "8081:8081"  # ← CHANGED from 8082 (was conflicting with analytics)
     environment:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SERVER_PORT: 8081
 
   event-processor-service:
     build: ./event-processor-service
+    container_name: retargetiq-event-processor-service-1
     depends_on:
       - kafka
     ports:
       - "8083:8083"
     environment:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SERVER_PORT: 8083
 
   analytics-service:
     build: ./analytics-service
+    container_name: retargetiq-analytics-service-1
     depends_on:
       - kafka
       - postgres
     ports:
-      - "8084:8084"
+      - "8084:8084"  # ← FIXED: Correct port mapping
     environment:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/retargetdb
       SPRING_DATASOURCE_USERNAME: retarget
       SPRING_DATASOURCE_PASSWORD: retarget
+      SERVER_PORT: 8084
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,metrics,prometheus
+      MANAGEMENT_METRICS_EXPORT_PROMETHEUS_ENABLED: "true"
 
   feature-store-service:
     build: ./feature-store-service
+    container_name: retargetiq-feature-store-service-1
     depends_on:
       - kafka
       - postgres
       - redis
     ports:
       - "8085:8085"
+    environment:
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/retargetdb
+      SPRING_REDIS_HOST: redis
+      SERVER_PORT: 8085
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,metrics,prometheus
+      MANAGEMENT_METRICS_EXPORT_PROMETHEUS_ENABLED: "true"
 
   retrieval-service:
     build: ./retrieval-service
+    container_name: retargetiq-retrieval-service-1
     depends_on:
       - feature-store-service
     ports:
       - "8086:8086"
+    environment:
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SERVER_PORT: 8086
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,metrics,prometheus
+      MANAGEMENT_METRICS_EXPORT_PROMETHEUS_ENABLED: "true"
 
   ranking-service:
     build: ./ranking-service
+    container_name: retargetiq-ranking-service-1
     depends_on:
       - retrieval-service
       - feature-store-service
     ports:
       - "8087:8087"
+    environment:
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SERVER_PORT: 8087
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,metrics,prometheus
+      MANAGEMENT_METRICS_EXPORT_PROMETHEUS_ENABLED: "true"
 
   rl-offer-service:
     build: ./rl-offer-service
+    container_name: retargetiq-rl-offer-service-1
     depends_on:
       - ranking-service
       - feature-store-service
     ports:
       - "8088:8088"
+    environment:
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SERVER_PORT: 8088
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,metrics,prometheus
+      MANAGEMENT_METRICS_EXPORT_PROMETHEUS_ENABLED: "true"
 
   recommend-api-service:
     build: ./recommend-api-service
+    container_name: retargetiq-recommend-api-service-1
     depends_on:
       - retrieval-service
       - ranking-service
@@ -123,9 +162,15 @@ services:
       - feature-store-service
     ports:
       - "8089:8089"
+    environment:
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SERVER_PORT: 8089
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,metrics,prometheus
+      MANAGEMENT_METRICS_EXPORT_PROMETHEUS_ENABLED: "true"
 
   frontend-ui:
     build: ./frontend-ui
+    container_name: retargetiq-frontend-ui-1
     ports:
       - "3000:3000"
     depends_on:
@@ -135,25 +180,35 @@ services:
   # MONITORING STACK
   # -------------------------------------------------------
   prometheus:
-    image: prom/prometheus
+    image: prom/prometheus:latest
     container_name: retargetiq-prometheus
-    volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
-    command:
-      - "--config.file=/etc/prometheus/prometheus.yml"
     ports:
       - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
     depends_on:
       - analytics-service
-      - event-processor-service
+      - ranking-service
+      - rl-offer-service
 
   grafana:
-    image: grafana/grafana
+    image: grafana/grafana:latest
     container_name: retargetiq-grafana
     ports:
       - "3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_SECURITY_ADMIN_USER: admin
+    volumes:
+      - grafana_data:/var/lib/grafana
     depends_on:
       - prometheus
 
 volumes:
   pgdata:
+  prometheus_data:
+  grafana_data:

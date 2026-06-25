@@ -1,9 +1,6 @@
 package com.retargetiq.analytics;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.MeterRegistry;
-import jakarta.annotation.PostConstruct;
+import com.retargetiq.analytics.metrics.MetricsService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,42 +16,33 @@ public class KafkaConsumer {
     private AnalyticsService analyticsService;
 
     @Autowired
-    private MeterRegistry meterRegistry;
+    private MetricsService metricsService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
-
-    // Metrics
-    private Counter eventsConsumedCounter;
-    private Counter eventsFailedCounter;
-
-    @PostConstruct
-    public void initMetrics() {
-        eventsConsumedCounter = Counter.builder("retargetiq_events_consumed_total")
-                .description("Total Kafka events consumed by analytics-service")
-                .register(meterRegistry);
-
-        eventsFailedCounter = Counter.builder("retargetiq_event_processing_failures_total")
-                .description("Total failed Kafka event processing attempts")
-                .register(meterRegistry);
-    }
-
+   
+    
     // ---------- USER ACTIVITY TOPIC ----------
-    @KafkaListener(topics = "user-activities", groupId = "analytics-group")
+    @KafkaListener(topics = "user-activity", groupId = "analytics-group")
     public void consumeUserActivity(String message) {
-
-        // ⭐ increment as soon as message arrives
-        eventsConsumedCounter.increment();
-
+        long startTime = System.currentTimeMillis();
+        
         try {
             logger.info("Received user activity: {}", message);
 
+            // Parse and process
             UserActivity userActivity = objectMapper.readValue(message, UserActivity.class);
             analyticsService.processUserActivity(userActivity);
 
-            logger.info("Successfully processed user activity for user: {}", userActivity.getUserId());
+            // Calculate and record metrics
+            long processingTime = System.currentTimeMillis() - startTime;
+            metricsService.recordEventProcessed(userActivity.getEventType(), processingTime);
+            metricsService.recordKafkaConsumerLatency(processingTime);
+
+            logger.info("Successfully processed user activity for user: {} ({}ms)", 
+                userActivity.getUserId(), processingTime);
 
         } catch (Exception e) {
-            eventsFailedCounter.increment(); // ⭐ track failures
+            metricsService.recordProcessingError("user_activity_processing");
             logger.error("Error processing user activity message: {}", message, e);
         }
     }
@@ -62,20 +50,27 @@ public class KafkaConsumer {
     // ---------- CAMPAIGN EVENTS TOPIC ----------
     @KafkaListener(topics = "campaign-events", groupId = "analytics-group")
     public void consumeCampaignEvent(String message) {
-
-        // ⭐ increment here too (for every topic)
-        eventsConsumedCounter.increment();
-
+        long startTime = System.currentTimeMillis();
+        
         try {
             logger.info("Received campaign event: {}", message);
 
+            // Parse and process
             UserActivity campaignEvent = objectMapper.readValue(message, UserActivity.class);
             analyticsService.processUserActivity(campaignEvent);
 
-            logger.info("Successfully processed campaign event for campaign: {}", campaignEvent.getCampaignId());
+            // Calculate and record metrics
+            long processingTime = System.currentTimeMillis() - startTime;
+            metricsService.recordEventProcessed(
+                campaignEvent.getEventType(), 
+                processingTime
+            );
+            metricsService.recordKafkaConsumerLatency(processingTime);
+
+            logger.info("Successfully processed campaign event ({}ms)", processingTime);
 
         } catch (Exception e) {
-            eventsFailedCounter.increment();
+            metricsService.recordProcessingError("campaign_event_processing");
             logger.error("Error processing campaign event message: {}", message, e);
         }
     }
